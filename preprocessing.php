@@ -6,6 +6,7 @@ error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 set_time_limit(600); // Naikkan batas waktu ke 10 menit untuk data besar
 
 // 1. SETUP DAN KONFIGURASI
+// -----------------------------------------------------------------------------
 require_once __DIR__ . '/vendor/autoload.php';
 use Sastrawi\Stemmer\StemmerInterface;
 
@@ -13,16 +14,19 @@ define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'twitter');
+
 define('DATA_TABLE', 'trending');
 define('ID_COLUMN', 'id');
 define('TEXT_COLUMN', 'isi_twit');
 define('SOURCE_COLUMN', 'sumber_file');
+
 define('SLANG_TABLE_NAME', 'slangword');
 define('SLANG_COLUMN', 'kata_tbaku');
 define('FORMAL_COLUMN', 'kata_baku');
 
 
 // 2. FUNGSI-FUNGSI BANTUAN
+// -----------------------------------------------------------------------------
 function loadSlangDictionary(mysqli $conn): array
 {
     $slangDict = [];
@@ -50,7 +54,7 @@ function preprocessText(string $text, array $slangDict, array $stopwords, \Sastr
 {
     $results = [];
     $results['lowercase'] = strtolower($text);
-    $results['no_punctuation'] = preg_replace('/[^a-z0-9\s]/', '', $results['lowercase']);
+    $results['no_punctuation'] = preg_replace('/[^a-zA-Z\s]/', '', $results['lowercase']);
     $tokens = array_filter(explode(' ', $results['no_punctuation']));
     $results['tokenized'] = json_encode(array_values($tokens));
     $noSlangTokens = array_map(fn($token) => $slangDict[$token] ?? $token, $tokens);
@@ -64,7 +68,9 @@ function preprocessText(string $text, array $slangDict, array $stopwords, \Sastr
     return $results;
 }
 
+
 // 3. EKSEKUSI UTAMA & TAMPILAN HTML
+// -----------------------------------------------------------------------------
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -76,77 +82,21 @@ function preprocessText(string $text, array $slangDict, array $stopwords, \Sastr
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; }
         h1 { text-align: center; color: white; background-color: #f5a941; padding: 20px 0; margin: 0; }
         .container { width: 95%; max-width: 1400px; margin: 20px auto; background-color: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 25px; }
-        
-        /* DIUBAH: Styling untuk kontainer form */
-        .form-container {
-            margin-bottom: 30px;
-            padding: 25px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-        }
-
-        /* BARU: Menggunakan Flexbox untuk layout form yang rapi */
-        .form-container form {
-            display: flex;
-            align-items: center; /* Menyejajarkan item secara vertikal */
-            gap: 15px; /* Memberi jarak antar elemen */
-            flex-wrap: wrap; /* Memungkinkan elemen turun baris pada layar kecil */
-        }
-        
-        .form-container label {
-            font-weight: bold;
-            color: #333;
-        }
-        
-        /* DIUBAH: Styling untuk dropdown <select> */
-        .form-container select {
-            flex-grow: 1; /* Membuat dropdown mengisi ruang yang tersedia */
-            padding: 12px 15px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-            background-color: #fff;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        /* BARU: Efek focus pada dropdown */
-        .form-container select:focus {
-            outline: none;
-            border-color: #f5a941;
-            box-shadow: 0 0 0 4px rgba(245, 169, 65, 0.25);
-        }
-
-        /* DIUBAH: Styling untuk tombol */
-        .form-container button {
-            padding: 12px 25px;
-            border-radius: 8px;
-            border: none;
-            font-size: 16px;
-            font-weight: bold;
-            background-color: #f5a941;
-            color: #333;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
-        }
-
-        /* BARU: Efek hover pada tombol */
-        .form-container button:hover {
-            background-color: #e49b3a; /* Warna sedikit lebih gelap */
-            transform: translateY(-2px); /* Efek terangkat */
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-        }
-        
+        .form-container { margin-bottom: 30px; padding: 25px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
+        .form-container form { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .form-container label { font-weight: bold; color: #333; }
+        .form-container select { flex-grow: 1; padding: 12px 15px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; background-color: #fff; transition: border-color 0.3s, box-shadow 0.3s; }
+        .form-container select:focus { outline: none; border-color: #f5a941; box-shadow: 0 0 0 4px rgba(245, 169, 65, 0.25); }
+        .form-container button { padding: 12px 25px; border-radius: 8px; border: none; font-size: 16px; font-weight: bold; background-color: #f5a941; color: #333; cursor: pointer; transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s; }
+        .form-container button:hover { background-color: #e49b3a; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); }
         .info-box { padding: 15px; margin-bottom: 20px; border-radius: 5px; }
         .info-box.success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
         .info-box.error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
         .info-box.neutral { background-color: #e2e3e5; border-color: #d6d8db; color: #383d41; }
         footer { text-align: center; padding: 20px; margin-top: 30px; color: #777; font-size: 14px; }
-        
         .page-actions { display: flex; justify-content: flex-end; margin-bottom: 20px; }
         .btn-back { display: inline-block; padding: 10px 20px; background-color: #6c757d; color: white; border-radius: 5px; text-decoration: none; font-weight: bold; transition: background-color 0.3s; }
         .btn-back:hover { background-color: #5a6268; }
-
         table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
         th, td { border: 1px solid #ddd; text-align: left; padding: 10px; font-size: 13px; vertical-align: top; word-wrap: break-word; }
         th { background-color: #f8c146; color: #333; position: sticky; top: 0; z-index: 1; }
@@ -205,7 +155,24 @@ function preprocessText(string $text, array $slangDict, array $stopwords, \Sastr
 
         <?php
         if ($selected_source) {
-            echo "<div class='info-box success'>Memproses dan menyimpan data dari sumber: <strong>" . htmlspecialchars($selected_source) . "</strong></div>";
+            echo "<div class='info-box success'>Memproses data dari sumber: <strong>" . htmlspecialchars($selected_source) . "</strong></div>";
+            
+            // Dapatkan nilai counter terakhir untuk sumber file ini
+            $current_max_count = 0;
+            $sql_get_count = "SELECT MAX(counter) as max_count FROM " . DATA_TABLE . " WHERE " . SOURCE_COLUMN . " = ?";
+            $stmt_count = $conn->prepare($sql_get_count);
+            $stmt_count->bind_param("s", $selected_source);
+            $stmt_count->execute();
+            $result_count = $stmt_count->get_result();
+            if ($result_count) {
+                $current_max_count = (int)$result_count->fetch_assoc()['max_count'];
+            }
+            $stmt_count->close();
+            
+            // Tentukan counter baru dengan menambahkan 1
+            $new_process_count = $current_max_count + 1;
+            
+            echo "<div class='info-box neutral'>Ini adalah proses ke-<strong>{$new_process_count}</strong> untuk dataset ini.</div>";
 
             // Load resources
             $slangDict = loadSlangDictionary($conn);
@@ -213,11 +180,11 @@ function preprocessText(string $text, array $slangDict, array $stopwords, \Sastr
             $stemmerFactory = new \Sastrawi\Stemmer\StemmerFactory();
             $stemmer = $stemmerFactory->createStemmer();
             
-            // Persiapkan statement UPDATE di luar loop
+            // Siapkan statement UPDATE untuk menyertakan process_count
             $sql_update = "UPDATE " . DATA_TABLE . " SET 
                             `lowercase` = ?, `no_punctuation` = ?, `tokenized` = ?, 
                             `no_slang` = ?, `no_stopwords` = ?, `stemmed` = ?, 
-                            `final_processed_text` = ? 
+                            `final_processed_text` = ?, `counter` = ? 
                            WHERE `id` = ?";
             $stmt_update = $conn->prepare($sql_update);
             
@@ -230,7 +197,7 @@ function preprocessText(string $text, array $slangDict, array $stopwords, \Sastr
             
             $processed_count = 0;
             if ($result_process && $result_process->num_rows > 0) {
-                echo "<p>Ditemukan " . $result_process->num_rows . " data. Memulai proses...</p>";
+                echo "<p>Ditemukan " . $result_process->num_rows . " data. Memulai proses dan penyimpanan...</p>";
                 echo '<div style="overflow-x:auto;"><table><thead>
                         <tr>
                             <th>ID</th><th>Teks Asli</th><th>Case Folding</th><th>Hapus Simbol</th>
@@ -245,17 +212,20 @@ function preprocessText(string $text, array $slangDict, array $stopwords, \Sastr
                     
                     $processed = preprocessText($originalText, $slangDict, $stopwords, $stemmer);
 
-                    $stmt_update->bind_param("sssssssi", 
+                    // Eksekusi UPDATE dengan counter baru. Tipe data: 7 string, 2 integer (sssssssii)
+                    $stmt_update->bind_param("sssssssii", 
                         $processed['lowercase'], $processed['no_punctuation'], $processed['tokenized'], 
                         $processed['no_slang'], $processed['no_stopwords'], $processed['stemmed'], 
-                        $processed['final_processed_text'], $id
+                        $processed['final_processed_text'],
+                        $new_process_count, // Simpan counter baru
+                        $id
                     );
                     
                     if ($stmt_update->execute()) {
                         $processed_count++;
                     }
 
-                    // Tampilkan hasil di tabel HTML
+                    // Tampilkan baris tabel
                     echo '<tr>';
                     echo '<td>' . htmlspecialchars($id) . '</td>';
                     echo '<td>' . htmlspecialchars($originalText) . '</td>';
@@ -269,8 +239,7 @@ function preprocessText(string $text, array $slangDict, array $stopwords, \Sastr
                     echo '</tr>';
                 }
                 echo '</tbody></table></div>';
-                echo "<div class='info-box success' style='margin-top: 20px;'><strong>Proses Selesai!</strong> Sebanyak {$processed_count} baris data telah berhasil diproses dan disimpan ke database.</div>";
-
+                echo "<div class='info-box success' style='margin-top: 20px;'><strong>Proses Selesai!</strong> Sebanyak {$processed_count} baris data berhasil diproses (sebagai proses ke-{$new_process_count}) dan disimpan ke database.</div>";
             } else {
                 echo "<div class='info-box neutral'>Tidak ada data ditemukan untuk sumber '" . htmlspecialchars($selected_source) . "'.</div>";
             }

@@ -4,8 +4,6 @@ define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'twitter');
-define('DATA_TABLE', 'trending');
-define('SOURCE_COLUMN', 'sumber_file');
 
 $message = ''; // Variabel untuk menyimpan pesan notifikasi
 
@@ -20,39 +18,55 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST['sumber_hapus'])) {
         die("Koneksi Gagal: " . $conn->connect_error);
     }
 
-    // Menggunakan prepared statement untuk keamanan dari SQL Injection
-    $sql_delete = "DELETE FROM " . DATA_TABLE . " WHERE " . SOURCE_COLUMN . " = ?";
-    $stmt = $conn->prepare($sql_delete);
-    
-    if ($stmt) {
-        $stmt->bind_param("s", $sumber_to_delete);
+    // Mulai transaksi untuk memastikan kedua proses DELETE berhasil atau tidak sama sekali
+    $conn->begin_transaction();
+
+    try {
+        // 1. Hapus dari tabel 'trending'
+        $sql_delete_trending = "DELETE FROM trending WHERE sumber_file = ?";
+        $stmt1 = $conn->prepare($sql_delete_trending);
+        $stmt1->bind_param("s", $sumber_to_delete);
+        $stmt1->execute();
+        $affected_rows_trending = $stmt1->affected_rows;
+        $stmt1->close();
+
+        // 2. Hapus dari tabel 'trending_bigrams'
+        $sql_delete_bigrams = "DELETE FROM trending_bigrams WHERE sumber_file = ?";
+        $stmt2 = $conn->prepare($sql_delete_bigrams);
+        $stmt2->bind_param("s", $sumber_to_delete);
+        $stmt2->execute();
+        $affected_rows_bigrams = $stmt2->affected_rows;
+        $stmt2->close();
         
-        if ($stmt->execute()) {
-            $affected_rows = $stmt->affected_rows;
-            $message = "<div class='info-box success'>Berhasil! Sebanyak {$affected_rows} baris data dari sumber '<strong>" . htmlspecialchars($sumber_to_delete) . "</strong>' telah dihapus.</div>";
-        } else {
-            $message = "<div class='info-box error'>Gagal menghapus data: " . htmlspecialchars($stmt->error) . "</div>";
-        }
-        $stmt->close();
-    } else {
-        $message = "<div class='info-box error'>Gagal mempersiapkan statement: " . htmlspecialchars($conn->error) . "</div>";
+        // Jika semua berhasil, commit (simpan permanen) transaksi
+        $conn->commit();
+        
+        $message = "<div class='info-box success'>Berhasil! <br>" . 
+                   "<strong>{$affected_rows_trending}</strong> baris data tweet dan " . 
+                   "<strong>{$affected_rows_bigrams}</strong> baris data bigram dari sumber '<strong>" . 
+                   htmlspecialchars($sumber_to_delete) . "</strong>' telah dihapus.</div>";
+
+    } catch (mysqli_sql_exception $exception) {
+        // Jika ada error, batalkan semua perubahan (rollback)
+        $conn->rollback();
+        $message = "<div class='info-box error'>Gagal menghapus data: " . htmlspecialchars($exception->getMessage()) . "</div>";
     }
-    
+
     $conn->close();
 }
 
 // --- Ambil daftar sumber file untuk dropdown (selalu dijalankan) ---
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 if ($conn->connect_error) {
-    die("Koneosi Gagal: " . $conn->connect_error);
+    die("Koneksi Gagal: " . $conn->connect_error);
 }
 
 $available_sources = [];
-$sql_get_sources = "SELECT DISTINCT " . SOURCE_COLUMN . " FROM " . DATA_TABLE . " WHERE " . SOURCE_COLUMN . " IS NOT NULL AND " . SOURCE_COLUMN . " != '' ORDER BY " . SOURCE_COLUMN . " ASC";
+$sql_get_sources = "SELECT DISTINCT sumber_file FROM trending WHERE sumber_file IS NOT NULL AND sumber_file != '' ORDER BY sumber_file ASC";
 $result_sources = $conn->query($sql_get_sources);
 if ($result_sources && $result_sources->num_rows > 0) {
     while ($row = $result_sources->fetch_assoc()) {
-        $available_sources[] = $row[SOURCE_COLUMN];
+        $available_sources[] = $row['sumber_file'];
     }
 }
 $conn->close();
@@ -105,12 +119,12 @@ $conn->close();
         <?php if (!empty($message)) echo $message; ?>
 
         <div class="info-box neutral">
-            <strong>Perhatian:</strong> Tindakan ini akan menghapus semua data tweet yang berasal dari sumber file yang Anda pilih. Tindakan ini tidak dapat dibatalkan.
+            <strong>Perhatian:</strong> Tindakan ini akan menghapus semua data tweet dan hasil analisis bigram yang berasal dari sumber file yang Anda pilih. Tindakan ini tidak dapat dibatalkan.
         </div>
         
         <div class="form-container">
             <!-- Form untuk memilih dan menghapus data -->
-            <form method="POST" action="hapus_data.php" onsubmit="return confirm('APAKAH ANDA YAKIN? Semua data dari sumber file ini akan dihapus secara permanen.');">
+            <form method="POST" action="hapus_data.php" onsubmit="return confirm('APAKAH ANDA YAKIN? Semua data dari sumber file ini akan dihapus secara permanen dari kedua tabel.');">
                 <label for="sumber_hapus">Pilih Sumber Data untuk Dihapus:</label>
                 <select name="sumber_hapus" id="sumber_hapus" required>
                     <option value="">-- Pilih Sumber File --</option>
@@ -125,7 +139,7 @@ $conn->close();
                     }
                     ?>
                 </select>
-                <button type="submit" class="btn-delete" <?= empty($available_sources) ? 'disabled' : '' ?>>Hapus Data</button>
+                <button type="submit" class="btn-delete" <?= empty($available_sources) ? 'disabled' : '' ?>>Hapus Semua Data Terkait</button>
             </form>
         </div>
     </div>
