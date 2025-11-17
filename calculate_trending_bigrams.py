@@ -17,7 +17,7 @@ DB_CONFIG = {
 BOOST_VALUE = 1.5
 TARGET_ENTITIES = {'PERSON', 'ORG', 'GPE'}
 # Daftar manual untuk memastikan kata kunci penting selalu di-boost
-MANUAL_BOOST_KEYWORDS = ['jokowi', 'prabowo', 'ganjar', 'anies', 'kpk', 'polri', 'natuna', 'jakarta']
+MANUAL_BOOST_KEYWORDS = ['jokowi', 'prabowo', 'ganjar', 'anies', 'kpk', 'luhut', 'gibran', 'dpr','polri', 'natuna', 'jakarta', 'uya','kuya', 'nafa', 'urbach', 'eko', 'patrio', 'sahroni']
 
 def setup_database(connection):
     """Memastikan skema DB memiliki kolom TS dan sumber_file."""
