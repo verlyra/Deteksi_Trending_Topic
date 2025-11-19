@@ -35,3 +35,4 @@ for x in myresult:
     cursor1.execute(sql, val)
     db.commit()
 
+#pertemuan10

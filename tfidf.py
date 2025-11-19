@@ -57,3 +57,5 @@ for x in myresult:
     val = (TFIDF, doc_id)
     cursor.execute(sql, val)
     db.commit()
+
+#pertemuan10
