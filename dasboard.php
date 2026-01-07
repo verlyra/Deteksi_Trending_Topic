@@ -61,6 +61,8 @@ if ($conn->connect_error) {
     .card-header.ringkas { background-color: #d4edda; color: #155724; }
     /* BARU: CSS untuk kartu Bigram */
     .card-header.bigram { background-color: #e2d9f3; color: #493267; }
+    .card-header.cluster { background-color: #d1c4e9; color: #4a148c; }
+    .card-header.dendro { background-color: #f3e5f5; color: #6a1b9a; }
     .card-body { padding: 20px 25px; font-size: 15px; color: #555; line-height: 1.6; flex-grow: 1; }
     footer { text-align: center; margin-top: 60px; padding: 20px; font-size: 14px; color: #777; }
   </style>
@@ -90,7 +92,14 @@ if ($conn->connect_error) {
         <div class="card-header bigram">📈 Analisis Trending</div>
         <div class="card-body">Menganalisis bigram yang sedang tren berdasarkan waktu (DF-IDFt) untuk menemukan topik yang sedang naik daun.</div>
       </a>
-      
+      <a href="clustering.php" class="card">
+        <div class="card-header cluster">🔗 Clustering Hierarchical</div>
+        <div class="card-body">Mengelompokkan n-gram berdasarkan kesamaan kemunculan menggunakan metode Average Linkage untuk menemukan pola topik.</div>
+      </a>
+      <a href="dendrogram.php" class="card">
+        <div class="card-header dendro">🌳 Dendrogram Clustering</div>
+        <div class="card-body">Visualisasi pohon hierarchical clustering untuk melihat struktur pengelompokan n-gram secara visual.</div>
+      </a>
       <a href="data_counter.php" class="card">
         <div class="card-header ringkas">📊 Ringkasan Data</div>
         <div class="card-body">Melihat statistik dan rincian jumlah data per sumber file yang ada di database.</div>
